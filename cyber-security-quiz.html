@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ เกมปลอดภัยทางไซเบอร์</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .quiz-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .option-btn {
+            transition: all 0.3s ease;
+            border: 2px solid #e5e7eb;
+        }
+
+        .option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            border-color: #667eea;
+        }
+
+        .option-btn.correct {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-color: #10b981;
+            animation: pulse 0.5s;
+        }
+
+        .option-btn.incorrect {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border-color: #ef4444;
+            animation: shake 0.5s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .progress-bar {
+            transition: width 0.5s ease;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .score-badge {
+            animation: bounceIn 0.6s;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .emoji-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .sparkle {
+            animation: sparkle 1.5s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div id="app"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const quizData = [
+            {
+                id: 1,
+                question: "รหัสผ่านที่ปลอดภัยที่สุดคือข้อใด?",
+                options: [
+                    "123456",
+                    "password123",
+                    "MyName2024",
+                    "P@ssw0rd#2024!Xy"
+                ],
+                correct: 3,
+                explanation: "รหัสผ่านที่ปลอดภัยควรมีความยาวอย่างน้อย 12 ตัวอักษร ประกอบด้วยตัวพิมพ์ใหญ่-เล็ก ตัวเลข และอักขระพิเศษ",
+                emoji: "🔐"
+            },
+            {
+                id: 2,
+                question: "ถ้าได้รับอีเมลแจ้งว่าถูกรางวัล แต่ต้องกรอกข้อมูลส่วนตัว ควรทำอย่างไร?",
+                options: [
+                    "กรอกข้อมูลทันที เพราะกลัวพลาดโอกาส",
+                    "ตรวจสอบความน่าเชื่อถือก่อน อาจเป็นการหลอกลวง (Phishing)",
+                    "ส่งต่อให้เพื่อนๆ",
+                    "แชร์ใน Social Media"
+                ],
+                correct: 1,
+                explanation: "นี่คือกลลวง Phishing ที่พยายามขโมยข้อมูลส่วนตัว ควรตรวจสอบความน่าเชื่อถือก่อนเสมอ และไม่เปิดเผยข้อมูลส่วนตัว",
+                emoji: "🎣"
+            },
+            {
+                id: 3,
+                question: "การใช้ Wi-Fi สาธารณะ (Public Wi-Fi) มีความเสี่ยงอย่างไร?",
+                options: [
+                    "ไม่มีความเสี่ยงใดๆ",
+                    "อาจถูกดักจับข้อมูล เช่น รหัสผ่าน",
+                    "ทำให้อินเทอร์เน็ตช้า",
+                    "ทำให้เครื่องร้อนเร็ว"
+                ],
+                correct: 1,
+                explanation: "Wi-Fi สาธารณะมีความเสี่ยงสูงที่จะถูกแฮ็กเกอร์ดักจับข้อมูล ควรห้ามทำธุรกรรมสำคัญ เช่น โอนเงิน หรือควรใช้ VPN",
+                emoji: "📡"
+            },
+            {
+                id: 4,
+                question: "Cyberbullying คืออะไร?",
+                options: [
+                    "การเล่นเกมออนไลน์",
+                    "การรังแกคุกคามผ่านช่องทางออนไลน์",
+                    "การแข่งขันเกม",
+                    "การสร้างเว็บไซต์"
+                ],
+                correct: 1,
+                explanation: "Cyberbullying คือการกลั่นแกล้ง ล้อเลียน รังแกผู้อื่นผ่านช่องทางออนไลน์ ถือเป็นการกระทำที่ผิดกฎหมายและส่งผลกระทบต่อจิตใจ",
+                emoji: "😢"
+            },
+            {
+                id: 5,
+                question: "ข้อใดเป็นข้อมูลส่วนตัวที่ไม่ควรเปิดเผยในโซเชียลมีเดีย?",
+                options: [
+                    "ชื่อเล่น",
+                    "สีที่ชอบ",
+                    "เลขที่บ้านและรหัสผ่าน",
+                    "ความสนใจ"
+                ],
+                correct: 2,
+                explanation: "ที่อยู่บ้าน เบอร์โทร รหัสผ่าน เลขบัตรประชาชน เป็นข้อมูลส่วนตัวที่ไม่ควรเปิดเผย เพราะอาจถูกนำไปใช้ในทางที่ผิด",
+                emoji: "🔒"
+            },
+            {
+                id: 6,
+                question: "Malware คืออะไร?",
+                options: [
+                    "โปรแกรมที่ดี",
+                    "ซอฟต์แวร์อันตราย เช่น ไวรัส มัลแวร์",
+                    "เกมออนไลน์",
+                    "แอปพลิเคชันช่วยเหลือ"
+                ],
+                correct: 1,
+                explanation: "Malware คือซอฟต์แวร์ที่เป็นอันตราย ออกแบบมาเพื่อทำลายระบบ ขโมยข้อมูล หรือสร้างความเสียหาย เช่น Virus, Trojan, Ransomware",
+                emoji: "🦠"
+            },
+            {
+                id: 7,
+                question: "ควรอัปเดตระบบปฏิบัติการและแอปพลิเคชันบ่อยแค่ไหน?",
+                options: [
+                    "ไม่ต้องอัปเดต",
+                    "ปีละครั้ง",
+                    "เมื่อมีการแจ้งเตือนให้อัปเดต",
+                    "10 ปีครั้ง"
+                ],
+                correct: 2,
+                explanation: "การอัปเดตช่วยปิดช่องโหว่ด้านความปลอดภัย เพิ่มประสิทธิภาพ และแก้ไขบั๊ก ควรอัปเดตทันทีเมื่อมีการแจ้งเตือน",
+                emoji: "🔄"
+            },
+            {
+                id: 8,
+                question: "การใช้รหัสผ่านเดียวกันในหลายเว็บไซต์มีความเสี่ยงอย่างไร?",
+                options: [
+                    "ไม่มีความเสี่ยง จำง่ายดี",
+                    "ถ้าถูกแฮ็กเว็บใดเว็บหนึ่ง บัญชีอื่นๆ ก็เสี่ยงโดนด้วย",
+                    "ช่วยประหยัดเวลา",
+                    "ปลอดภัยกว่า"
+                ],
+                correct: 1,
+                explanation: "การใช้รหัสผ่านซ้ำกันทำให้เมื่อบัญชีใดถูกเจาะ แฮ็กเกอร์สามารถเข้าถึงบัญชีอื่นๆ ได้ทันที ควรใช้รหัสผ่านที่ไม่ซ้ำกันในแต่ละบัญชี",
+                emoji: "⚠️"
+            },
+            {
+                id: 9,
+                question: "ก่อนดาวน์โหลดแอปพลิเคชัน ควรตรวจสอบอะไร?",
+                options: [
+                    "ไม่ต้องตรวจสอบ โหลดเลย",
+                    "แค่ดูชื่อแอป",
+                    "ตรวจสอบผู้พัฒนา รีวิว และสิทธิ์ที่ขอ",
+                    "ดูสีไอคอน"
+                ],
+                correct: 2,
+                explanation: "ควรตรวจสอบความน่าเชื่อถือของผู้พัฒนา อ่านรีวิว ตรวจสอบสิทธิ์ที่แอปขอ และดาวน์โหลดจากแหล่งที่เชื่อถือได้เท่านั้น",
+                emoji: "📱"
+            },
+            {
+                id: 10,
+                question: "Two-Factor Authentication (2FA) คืออะไร?",
+                options: [
+                    "การใช้รหัสผ่าน 2 ครั้ง",
+                    "การยืนยันตัวตน 2 ขั้นตอน เพิ่มความปลอดภัย",
+                    "มีรหัสผ่าน 2 อัน",
+                    "เข้าสู่ระบบ 2 ครั้ง"
+                ],
+                correct: 1,
+                explanation: "2FA คือการยืนยันตัวตนด้วย 2 วิธี เช่น รหัสผ่าน + รหัส OTP ที่ส่งมาทาง SMS ช่วยเพิ่มความปลอดภัยมากขึ้น",
+                emoji: "🔐"
+            }
+        ];
+
+        function CyberSecurityQuiz() {
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [selectedAnswer, setSelectedAnswer] = useState(null);
+            const [showExplanation, setShowExplanation] = useState(false);
+            const [score, setScore] = useState(0);
+            const [quizCompleted, setQuizCompleted] = useState(false);
+            const [answeredQuestions, setAnsweredQuestions] = useState([]);
+
+            const handleAnswerClick = (index) => {
+                if (selectedAnswer !== null) return;
+                
+                setSelectedAnswer(index);
+                setShowExplanation(true);
+                
+                const isCorrect = index === quizData[currentQuestion].correct;
+                if (isCorrect) {
+                    setScore(score + 1);
+                }
+                
+                setAnsweredQuestions([...answeredQuestions, {
+                    question: quizData[currentQuestion].question,
+                    selectedAnswer: index,
+                    correctAnswer: quizData[currentQuestion].correct,
+                    isCorrect: isCorrect
+                }]);
+            };
+
+            const handleNext = () => {
+                if (currentQuestion < quizData.length - 1) {
+                    setCurrentQuestion(currentQuestion + 1);
+                    setSelectedAnswer(null);
+                    setShowExplanation(false);
+                } else {
+                    setQuizCompleted(true);
+                }
+            };
+
+            const restartQuiz = () => {
+                setCurrentQuestion(0);
+                setSelectedAnswer(null);
+                setShowExplanation(false);
+                setScore(0);
+                setQuizCompleted(false);
+                setAnsweredQuestions([]);
+            };
+
+            const getScoreMessage = () => {
+                const percentage = (score / quizData.length) * 100;
+                if (percentage === 100) return { text: "สุดยอด! คุณเป็นผู้เชี่ยวชาญด้านความปลอดภัยทางไซเบอร์! 🏆", color: "text-yellow-500" };
+                if (percentage >= 80) return { text: "ดีมาก! คุณมีความรู้ด้านความปลอดภัยในระดับดี! 🌟", color: "text-green-500" };
+                if (percentage >= 60) return { text: "ดี! แต่ยังต้องพัฒนาความรู้เพิ่มเติมนะ 📚", color: "text-blue-500" };
+                return { text: "ต้องพัฒนาอีกนิดนะ ลองศึกษาเพิ่มเติม 💪", color: "text-orange-500" };
+            };
+
+            if (quizCompleted) {
+                const scoreMsg = getScoreMessage();
+                return (
+                    <div className="quiz-card max-w-4xl mx-auto p-8">
+                        <div className="text-center">
+                            <div className="emoji-float text-8xl mb-6">🎉</div>
+                            <h2 className="text-4xl font-bold text-gray-800 mb-4">เสร็จสิ้น!</h2>
+                            <div className="score-badge inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-12 py-6 rounded-full text-5xl font-bold mb-6">
+                                {score}/{quizData.length}
+                            </div>
+                            <p className={`text-2xl font-semibold mb-8 ${scoreMsg.color}`}>{scoreMsg.text}</p>
+                            
+                            <div className="bg-gray-50 rounded-xl p-6 mb-6 text-left max-h-96 overflow-y-auto">
+                                <h3 className="text-xl font-bold text-gray-800 mb-4">📋 สรุปผลการทำแบบทดสอบ</h3>
+                                {answeredQuestions.map((item, index) => (
+                                    <div key={index} className="mb-4 p-4 bg-white rounded-lg border-l-4" 
+                                         style={{borderLeftColor: item.isCorrect ? '#10b981' : '#ef4444'}}>
+                                        <p className="font-semibold text-gray-700 mb-2">
+                                            {index + 1}. {item.question}
+                                        </p>
+                                        <p className={`text-sm ${item.isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                                            {item.isCorrect ? '✅ ถูกต้อง' : '❌ ไม่ถูกต้อง'}
+                                        </p>
+                                        {!item.isCorrect && (
+                                            <p className="text-sm text-gray-600 mt-1">
+                                                คำตอบที่ถูก: {quizData[index].options[item.correctAnswer]}
+                                            </p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button 
+                                onClick={restartQuiz}
+                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full text-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg"
+                            >
+                                🔄 ทำแบบทดสอบอีกครั้ง
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const question = quizData[currentQuestion];
+            const progress = ((currentQuestion + 1) / quizData.length) * 100;
+
+            return (
+                <div className="quiz-card max-w-3xl mx-auto p-8">
+                    {/* Header */}
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                            🛡️ เกมปลอดภัยทางไซเบอร์
+                        </h1>
+                        <p className="text-gray-600">ทดสอบความรู้ของคุณ!</p>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="mb-8">
+                        <div className="flex justify-between text-sm text-gray-600 mb-2">
+                            <span>คำถามที่ {currentQuestion + 1} จาก {quizData.length}</span>
+                            <span>คะแนน: {score}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div className="progress-bar h-3 rounded-full" style={{width: `${progress}%`}}></div>
+                        </div>
+                    </div>
+
+                    {/* Question */}
+                    <div className="mb-8">
+                        <div className="flex items-center gap-4 mb-6">
+                            <span className="text-5xl emoji-float">{question.emoji}</span>
+                            <h2 className="text-2xl font-semibold text-gray-800">{question.question}</h2>
+                        </div>
+
+                        {/* Options */}
+                        <div className="space-y-4">
+                            {question.options.map((option, index) => {
+                                let buttonClass = "option-btn w-full p-4 rounded-xl text-left font-medium text-gray-700";
+                                
+                                if (selectedAnswer !== null) {
+                                    if (index === question.correct) {
+                                        buttonClass += " correct";
+                                    } else if (index === selectedAnswer && index !== question.correct) {
+                                        buttonClass += " incorrect";
+                                    }
+                                }
+
+                                return (
+                                    <button
+                                        key={index}
+                                        onClick={() => handleAnswerClick(index)}
+                                        disabled={selectedAnswer !== null}
+                                        className={buttonClass}
+                                    >
+                                        <span className="font-bold mr-3">{String.fromCharCode(65 + index)}.</span>
+                                        {option}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Explanation */}
+                    {showExplanation && (
+                        <div className="mb-6 p-6 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+                            <h3 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                                <span>💡</span> คำอธิบาย
+                            </h3>
+                            <p className="text-blue-800">{question.explanation}</p>
+                        </div>
+                    )}
+
+                    {/* Next Button */}
+                    {showExplanation && (
+                        <div className="text-center">
+                            <button
+                                onClick={handleNext}
+                                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 shadow-lg sparkle"
+                            >
+                                {currentQuestion < quizData.length - 1 ? 'คำถามถัดไป →' : 'ดูผลคะแนน 🎯'}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <div className="mt-8 text-center text-sm text-gray-500">
+                        <p>💡 เคล็ดลับ: อ่านคำถามให้ดีก่อนตอบนะ!</p>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('app'));
+        root.render(<CyberSecurityQuiz />);
+    </script>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</body>
+</html>
